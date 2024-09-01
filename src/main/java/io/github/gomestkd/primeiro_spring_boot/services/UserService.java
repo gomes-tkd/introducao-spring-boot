@@ -4,6 +4,7 @@ import io.github.gomestkd.primeiro_spring_boot.entities.User;
 import io.github.gomestkd.primeiro_spring_boot.repositories.UserRepository;
 import io.github.gomestkd.primeiro_spring_boot.services.exceptions.DatabaseException;
 import io.github.gomestkd.primeiro_spring_boot.services.exceptions.ResourceNotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -34,7 +35,7 @@ public class UserService {
     public void delete(Long id) {
         try {
             repository.deleteById(id);
-        } catch (EmptyResultDataAccessException e) {
+        } catch (EntityNotFoundException e) {
             throw new ResourceNotFoundException(id);
         } catch (DataIntegrityViolationException e) {
             throw new DatabaseException(e.getMessage());
@@ -42,9 +43,13 @@ public class UserService {
     }
 
     public User update(Long id, User obj) {
-        User entity = repository.getReferenceById(id);
-        updateData(entity, obj);
-        return repository.save(entity);
+        try {
+            User entity = repository.getReferenceById(id);
+            updateData(entity, obj);
+            return repository.save(entity);
+        } catch (EntityNotFoundException e) {
+            throw new ResourceNotFoundException(id);
+        }
     }
 
     private void updateData(User entity, User obj) {
